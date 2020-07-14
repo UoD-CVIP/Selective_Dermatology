@@ -12,6 +12,9 @@ import sys
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
+# Own Modules Imports
+from utils import str_to_bool
+
 
 __author__ = ["Jacob Carse", "Stephen Hogg"]
 __credits__ = ["Jacob Carse", "Stephen Hogg"]
@@ -56,6 +59,20 @@ def load_arguments(description):
     argument_parser.add_argument("--seed", type=int,
                                  default=int(config_parser["standard"]["seed"]),
                                  help="Integer used to set the random seed. Set to -1 for a random seed.")
+
+    # Dataset Arguments
+    argument_parser.add_argument("--dataset_dir", type=str,
+                                 default=config_parser["dataset"]["dataset_dir"],
+                                 help="Directory path for the dataset.")
+    argument_parser.add_argument("--image_x", type=int,
+                                 default=int(config_parser["dataset"]["image_x"]),
+                                 help="Integer for the x dimension of the image after resizing.")
+    argument_parser.add_argument("--image_y", type=int,
+                                 default=int(config_parser["dataset"]["image_y"]),
+                                 help="Integer for the y dimension of the image after resizing.")
+    argument_parser.add_argument("--augmentation", type=str_to_bool,
+                                 default=config_parser["dataset"]["augmentation"].lower() == "true",
+                                 help="Boolean value for if augmentation should be applied to training data.")
 
     # Returns the Argument Parser Namespace.
     arguments = argument_parser.parse_args()
