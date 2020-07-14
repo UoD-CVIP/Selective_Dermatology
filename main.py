@@ -8,6 +8,7 @@ This file loads the arguments, sets random seed, initialises and trains a model.
 
 
 # Own Modules Imports
+from utils import *
 from config import *
 
 
@@ -28,3 +29,8 @@ if __name__ == "__main__":
     # Displays the given arguments.
     print("Loaded Arguments:")
     print_arguments(arguments)
+
+    # Sets the random seed if specified.
+    if arguments["seed"] != -1:
+        set_random_seed(arguments["seed"])
+        print(f"\nSet Random Seed to {arguments['seed']}")

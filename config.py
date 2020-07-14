@@ -53,6 +53,9 @@ def load_arguments(description):
     argument_parser.add_argument("--experiment", type=str,
                                  default=config_parser["standard"]["experiment"],
                                  help="String representing the name of the current experiment.")
+    argument_parser.add_argument("--seed", type=int,
+                                 default=int(config_parser["standard"]["seed"]),
+                                 help="Integer used to set the random seed. Set to -1 for a random seed.")
 
     # Returns the Argument Parser Namespace.
     arguments = argument_parser.parse_args()
