@@ -73,6 +73,12 @@ def load_arguments(description):
     argument_parser.add_argument("--augmentation", type=str_to_bool,
                                  default=config_parser["dataset"]["augmentation"].lower() == "true",
                                  help="Boolean value for if augmentation should be applied to training data.")
+    argument_parser.add_argument("--val_split", type=float,
+                                 default=float(config_parser["dataset"]["val_split"]),
+                                 help="Floating point value for the dataset validation split.")
+    argument_parser.add_argument("--test_split", type=float,
+                                 default=float(config_parser["dataset"]["test_split"]),
+                                 help="Floating point value for the dataset testing split.")
 
     # Returns the Argument Parser Namespace.
     arguments = argument_parser.parse_args()
