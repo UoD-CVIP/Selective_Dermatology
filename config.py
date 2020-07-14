@@ -47,12 +47,16 @@ def load_arguments(description):
         config_parser.read("config.ini")
 
     # Standard Arguments
+    argument_parser.add_argument("--config_file", type=str,
+                                 default="config.ini",
+                                 help="String representing the file path to the config file.")
     argument_parser.add_argument("--experiment", type=str,
                                  default=config_parser["standard"]["experiment"],
                                  help="String representing the name of the current experiment.")
 
     # Returns the Argument Parser Namespace.
-    return argument_parser.parse_args()
+    arguments = argument_parser.parse_args()
+    return vars(arguments)
 
 
 def print_arguments(arguments):
@@ -62,5 +66,5 @@ def print_arguments(arguments):
     """
 
     # Cycles through all the arguments within the Namespace object.
-    for argument in vars(arguments):
-        print(f"{argument: <24}: {getattr(arguments, argument)}")
+    for key, value in arguments.items():
+        print(f"{key: <24}: {value}")
