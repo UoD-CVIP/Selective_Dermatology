@@ -12,8 +12,9 @@ from utils import *
 from config import *
 
 
-__author__ = ["Jacob Carse", "Stephen Hogg"]
-__credits__ = ["Jacob Carse", "Stephen Hogg"]
+__author__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
+__copyright__ = "Copyright 2020, Selective Dermatology"
+__credits__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
 __license__ = "MIT"
 __version__ = "0.0.1"
 __maintainer__ = "Jacob Carse"
