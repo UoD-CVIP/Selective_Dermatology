@@ -30,7 +30,7 @@ class SelectiveNet(nn.Module):
         forward - Forward propagation for the SelectiveNet model.
     """
 
-    def __init__(self, arguments, n=0):
+    def __init__(self, arguments):
         """
         Initialiser for the model that initialises the models layers.
         :param arguments: Dictionary of arguments.
@@ -41,7 +41,7 @@ class SelectiveNet(nn.Module):
         super(SelectiveNet, self).__init__()
 
         # Loads the EfficientNet encoder.
-        self.encoder = EfficientNet.from_pretrained(f"efficientnet-b{str(n)}")
+        self.encoder = EfficientNet.from_pretrained(f"efficientnet-b{str(arguments['efficient_net'])}")
         self.encoder_pool = nn.AdaptiveAvgPool2d(1)
 
         # Gets the dimension of the encoder output.
