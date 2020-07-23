@@ -60,6 +60,14 @@ def load_arguments(description):
     argument_parser.add_argument("--seed", type=int,
                                  default=int(config_parser["standard"]["seed"]),
                                  help="Integer used to set the random seed. Set to -1 for a random seed.")
+    argument_parser.add_argument("--tensorboard_dir", type=str,
+                                 default=config_parser["standard"]["tensorboard_dir"],
+                                 help="String representing the Directory path for the TensorBoard output.")
+
+    # Debug Arguments
+    argument_parser.add_argument("--fast_dev_run", type=str_to_bool,
+                                 default=config_parser["debug"]["fast_dev_run"].lower() == "true",
+                                 help="Boolean for if the model should run in debug mode.")
 
     # Dataset Arguments
     argument_parser.add_argument("--dataset_dir", type=str,
@@ -80,6 +88,65 @@ def load_arguments(description):
     argument_parser.add_argument("--test_split", type=float,
                                  default=float(config_parser["dataset"]["test_split"]),
                                  help="Floating point value for the dataset testing split.")
+
+    # Performance Arguments
+    argument_parser.add_argument("--efficient_net", type=int,
+                                 default=int(config_parser["performance"]["efficient_net"]),
+                                 help="Integer representing the compound coefficient of the EfficientNet.")
+    argument_parser.add_argument("--precision", type=int,
+                                 default=int(config_parser["performance"]["precision"]),
+                                 help="Integer for the level of precision used to train the model. 16 or 32.")
+    argument_parser.add_argument("--num_gpus", type=int,
+                                 default=int(config_parser["performance"]["num_gpus"]),
+                                 help="Integer for the number of GPUs to use to train the model.")
+    argument_parser.add_argument("--data_workers", type=int,
+                                 default=int(config_parser["performance"]["data_workers"]),
+                                 help="Integer for the number of data loaders used to load the data.")
+    argument_parser.add_argument("--distributed_backend", type=str,
+                                 default=config_parser["performance"]["distributed_backend"],
+                                 help="String for the type of distributed learning method to be used.")
+
+    # Training Arguments
+    argument_parser.add_argument("--starting_lr", type=float,
+                                 default=float(config_parser["training"]["starting_lr"]),
+                                 help="Floating point value for the starting learning rate. -1 for auto.")
+    argument_parser.add_argument("--max_lr", type=float,
+                                 default=float(config_parser["training"]["max_lr"]),
+                                 help="Floating point value for the maximum learning rate. -1 for auto.")
+    argument_parser.add_argument("--batch_size", type=int,
+                                 default=int(config_parser["training"]["batch_size"]),
+                                 help="Integer for the batch size. -1 for auto.")
+
+    # Early Stopping Arguments
+    argument_parser.add_argument("--min_delta", type=float,
+                                 default=float(config_parser["early_stopping"]["min_delta"]),
+                                 help="Floating point value for the minimum delta for early stopping.")
+    argument_parser.add_argument("--patience", type=int,
+                                 default=int(config_parser["early_stopping"]["patience"]),
+                                 help="Integer for the patience used for early stopping.")
+    argument_parser.add_argument("--max_epochs", type=int,
+                                 default=int(config_parser["early_stopping"]["max_epochs"]),
+                                 help="Integer for the maximum number of epochs used in training.")
+    argument_parser.add_argument("--min_epochs", type=int,
+                                 default=int(config_parser["early_stopping"]["min_epochs"]),
+                                 help="Integer for the minimum number of epochs used in training.")
+
+    # Selective Arguments
+    argument_parser.add_argument("--alpha", type=float,
+                                 default=float(config_parser["selective"]["alpha"]),
+                                 help="Floating point value for the alpha value of the Selective loss.")
+    argument_parser.add_argument("--lambda", type=int,
+                                 default=int(config_parser["selective"]["lambda"]),
+                                 help="Floating point value for the lambda value of the Selective loss.")
+    argument_parser.add_argument("--coverage", type=float,
+                                 default=float(config_parser["selective"]["coverage"]),
+                                 help="Floating point value for the target coverage of the Selective loss.")
+    argument_parser.add_argument("--drop_rate", type=float,
+                                 default=float(config_parser["selective"]["drop_rate"]),
+                                 help="Floating point value for the drop rate for the model's dropout layers.")
+    argument_parser.add_argument("--drop_iterations", type=int,
+                                 default=int(config_parser["selective"]["drop_iterations"]),
+                                 help="Integer for the number of iterations to perform for MC Dropout.")
 
     # Returns the Argument Parser Namespace.
     arguments = argument_parser.parse_args()
