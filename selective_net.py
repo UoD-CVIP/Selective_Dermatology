@@ -7,9 +7,12 @@ This file defines the PyTorch Lightning Module used to train and test the Select
 
 
 # Built-in/Generic Imports
+import os
 
 # Library Imports
 import torch
+import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -40,8 +43,8 @@ class SelectiveNetModule(pl.LightningModule):
         training_step - Method for performing a training step.
         validation_step - Method for performing a validation step.
         validation_epoch_end - Method for summarises the validation steps.
-        test_step -
-        test_epoch_end -
+        test_step - Method for performing a testing step.
+        test_epoch_end - Method for summaries the testing steps and producing an output csv file.
         prepare_data - Method for preparing the Dataset objects.
         train_dataloader - Gets the data loader for the training data.
         val_dataloader - Gets the data loader for the validation data.
@@ -107,7 +110,7 @@ class SelectiveNetModule(pl.LightningModule):
         auxiliary_loss = auxiliary_loss.mean()
 
         # Gets the loss using the selective risk, coverage and auxiliary loss.
-        loss = self.hparams["alpha"] * (selective_risk + self.hparams["lamda"] *
+        loss = self.hparams["alpha"] * (selective_risk + self.hparams["lambda"] *
                                         max(self.hparams["coverage"] - emp_coverage, 0) ** 2) +\
                                         (1 - self.hparams["alpha"]) * auxiliary_loss
 
@@ -221,10 +224,80 @@ class SelectiveNetModule(pl.LightningModule):
         :return: Dictionary of testing outputs.
         """
 
-        pass
+        # Splits the images and labels from the batch.
+        images, labels = batch
+
+        # Performs forward propagation with the SelectiveNet model.
+        predictions, selection, _ = self.forward(images)
+        predictions = F.softmax(predictions)
+
+        # Defines the list for mc dropout outputs.
+        mc_predictions, mc_selection = [], []
+
+        # Performs multiple forward propagation iterations with dropout.
+        for _ in range(self.hparams["drop_iterations"]):
+            pred, sel, _ = self.forward(images, drop_rate=self.hparams["drop_rate"])
+            mc_predictions.append(pred)
+            mc_selection.append(sel)
+
+        # Finds the mean of the predictions and selection scores.
+        mc_predictions = F.softmax(torch.mean(torch.stack(mc_predictions), 0))
+        mc_selection = torch.mean(torch.stack(mc_selection), 0)
+
+        # Convents the PyTorch tensors to NumPy arrays.
+        predictions, selection, mc_predictions, mc_selection, labels = \
+            predictions.cpu().numpy(), selection.cpu().numpy(), \
+            mc_predictions.cpu().numpy(), mc_selection.cpu().numpy(), \
+            labels.cpu().numpy()
+
+        # Returns the dictionary of testing results for the testing step.
+        return {
+            "predictions": predictions,
+            "selection": selection,
+            "mc_predictions": mc_predictions,
+            "mc_selection": mc_selection,
+            "labels": labels
+        }
 
     def test_epoch_end(self, outputs):
-        pass
+        """
+        Summaries all the testing steps and outputs a csv file contains predictions and selective scores.
+        :param outputs: Dictionary of outputs for the testing steps.
+        :return: PyTorch Lighting output dictionary.
+        """
+
+        # Declares the lists used for storing test outputs.
+        csv_file, predictions, selections, mc_predictions, mc_selections, labels = [], [], [], [], [], []
+
+        # Loops though the outputs of the test steps and appends them to the test output lists.
+        for output in outputs:
+            predictions += output["predictions"].tolist()
+            selections += output["selection"][:, 0].tolist()
+            mc_predictions += output["mc_predictions"].tolist()
+            mc_selections += output["mc_selection"][:, 0].tolist()
+            labels += output["labels"].tolist()
+
+        # Gets all the filenames of the test images.
+        filenames = [os.path.basename(file_path)[:-4] for file_path in self.test_data.filenames]
+
+        # Converts the predictions to NumPy arrays.
+        predictions, mc_predictions = np.array(predictions), np.array(mc_predictions)
+
+        # Creates a Pandas DataFrame with the test outputs.
+        dataset = pd.DataFrame({"image": filenames[:len(predictions)],
+                                "label": labels,
+                                "mal": predictions[:, 0],
+                                "ben": predictions[:, 1],
+                                "sel": selections,
+                                "mc_mal": mc_predictions[:, 0],
+                                "mc_ben": mc_predictions[:, 1],
+                                "mc_sel": mc_selections})
+
+        # Saves the DataFrame to an output csv file.
+        dataset.to_csv(f"{self.hparams['experiment']}_output.csv", index=False)
+
+        # Returns an empty PyTorch Lightning output dictionary.
+        return {}
 
     def prepare_data(self):
         """
