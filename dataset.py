@@ -75,7 +75,7 @@ def get_datasets(arguments):
 
     # Splits the testing dataset into validation and testing.
     val_split = arguments["val_split"] / (arguments["val_split"] + arguments["test_split"])
-    temp_filenames, val_filenames, temp_labels, val_labels = train_test_split(temp_filenames, test_labels,
+    temp_filenames, val_filenames, temp_labels, val_labels = train_test_split(temp_filenames, temp_labels,
                                                                               test_size=val_split,
                                                                               random_state=arguments["seed"])
 
