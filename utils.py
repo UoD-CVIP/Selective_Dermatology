@@ -9,6 +9,7 @@ This file contains the following utility functions:
 
 
 # Built-in/Generic Imports
+import os
 from argparse import ArgumentTypeError
 
 # Library Imports
@@ -81,12 +82,12 @@ def get_trainer(arguments):
     if arguments["num_gpus"] == 0:
         precision = 32
     else:
-        precision = 16 if arguments["precision"] == -1 else None
+        precision = 16 if arguments["precision"] == 16 else 32
 
     # Determines if a batch size finder should be used to determine the maximum batch size.
     batch_size = "binsearch" if arguments["batch_size"] == -1 else None
 
-    # Determins if a learning rate finder should be used to determine the optimal starting learning rate.
+    # Determines if a learning rate finder should be used to determine the optimal starting learning rate.
     lr = "starting_lr" if arguments["starting_lr"] == -1 else False
 
     # Sets up the TensorBoard Logger used to track training metrics.
@@ -96,7 +97,9 @@ def get_trainer(arguments):
     early_stopping = pl.callbacks.EarlyStopping("val_loss", arguments["min_delta"], arguments["patience"], verbose=True)
 
     # Sets up the checkpoint callback.
-    checkpoint_callback = pl.callbacks.model_checkpoint.ModelCheckpoint("Models/", monitor="val_loss", save_top_k=1)
+    os.makedirs(arguments["experiment"], exist_ok=True)
+    checkpoint_callback = pl.callbacks.model_checkpoint.ModelCheckpoint(filepath=arguments["experiment"],
+                                                                        monitor="val_loss", save_top_k=1)
 
     # Creates the PyTorch Lightning Trainer with values from arguments.
     return pl.Trainer(distributed_backend=distributed_backend, gpus=num_gpus, precision=precision,
