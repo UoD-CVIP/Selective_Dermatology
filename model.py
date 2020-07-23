@@ -47,7 +47,7 @@ class SelectiveNet(nn.Module):
         # Gets the dimension of the encoder output.
         with torch.no_grad():
             temp_input = torch.zeros(1, 3, arguments["image_x"], arguments["image_y"])
-            encoder_size = self.encoder.extract_features(temp_input).shape[2]
+            encoder_size = self.encoder.extract_features(temp_input).shape[1]
 
         # Initialises the classification head for generating predictions.
         self.classifier = nn.Linear(encoder_size, 2)
