@@ -1,35 +1,37 @@
 # -*- coding: utf-8 -*-
 
+
 """
-This file contains the following utility functions:
-    str_to_bool - Function to convert a string to a boolean value.
-    set_random_seed - Function to set random seed across the application.
-    get_trainer - Function to get the PyTorch Lightning Trainer used to train and test the model.
+The file contains the following utility functions for the application:
+    str_to_bool - Function to convert an input string to a boolean value.
+    log - Function to print and/or log messages to the console or logging file.
+    set_random_seed - Function used to set the random seed for all libraries used to generate random numbers.
 """
 
 
 # Built-in/Generic Imports
 import os
+import random
 from argparse import ArgumentTypeError
 
 # Library Imports
 import torch
-import pytorch_lightning as pl
+import numpy as np
 
 
-__author__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
+__author__    = ["Jacob Carse"]
 __copyright__ = "Copyright 2020, Selective Dermatology"
-__credits__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
-__license__ = "MIT"
-__version__ = "0.0.1"
-__maintainer__ = "Jacob Carse"
-__email__ = "j.carse@dundee.ac.uk"
-__status__ = "Development"
+__credits__   = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
+__license__   = "MIT"
+__version__   = "3.0.0"
+__maintainer  = "Jacob Carse"
+__email__     = "j.carse@dundee.ac.uk"
+__status__    = "Development"
 
 
 def str_to_bool(argument):
     """
-    Function to convert a string to a boolean.
+    Function to convert a string to a boolean value.
     :param argument: String to be converted.
     :return: Boolean value.
     """
@@ -43,67 +45,60 @@ def str_to_bool(argument):
     elif argument.lower() == "false" or argument.lower() == 'f':
         return False
 
-    # Returns an error if the value is not converted to boolean.
-    raise ArgumentTypeError("Boolean value expected.")
+    # Returns an error if the value is not converted to a boolean value.
+    return ArgumentTypeError(f"Boolean value expected. Got \"{argument}\".")
+
+
+def log(arguments, message):
+    """
+    Logging function that will both print and log an input message.
+    :param arguments: ArgumentParser object containing 'log_dir' and 'experiment'.
+    :param message: String containing the message to be printed and/or logged.
+    """
+
+    # Prints the message to console if verbose is set to True.
+    if arguments.verbose:
+        print(message)
+
+    # Logs the message within a specific log file is defined.
+    if arguments.log_dir != '':
+        # Creates the directory for the log files.
+        os.makedirs(arguments.log_dir, exist_ok=True)
+
+        # Logs the message to the log file.
+        print(message, file=open(os.path.join(arguments.log_dir, f"{arguments.experiment}_log.txt"), 'a'))
 
 
 def set_random_seed(seed):
     """
-    Sets the random seed for all libraries that are used to generate random numbers.
-    :param seed: Integer for the seed to be set as the random seed.
+    Sets the random sed or all libraries that are used to generate random numbers.
+    :param seed: Integer for the seed that will be used.
     """
 
-    pl.seed_everything(seed)
+    # Sets the seed for the inbuilt Python functions.
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+    # Sets the seed for the NumPy library.
+    np.random.seed(seed)
+
+    # Sets the seed for the PyTorch library.
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
 
 
-def get_trainer(arguments):
+def get_device(arguments):
     """
-    Function to get a PyTorch Lightning Trainer used for training and testing of a model.
-    :param arguments: Dictionary of arguments.
-    :return: A PyTorch Lightning Trainer.
+    Sets the device that will be used to training and testing.
+    :param arguments: A ArgumentParser Namespace containing "gpu".
+    :return: A PyTorch device.
     """
 
-    # Gets the number of GPUs that should be used for the trainer.
-    if arguments["num_gpus"] == 0:
-        num_gpus = None
+    # Checks if the GPU is available to be used and sets the .
+    if arguments.gpu and torch.cuda.is_available():
+        return torch.device(f"cuda:{torch.cuda.device_count() - 1}")
+
+    # Sets the device to CPU.
     else:
-        if torch.cuda.device_count() < arguments["num_gpus"]:
-            num_gpus = torch.cuda.device_count()
-        else:
-            num_gpus = arguments["num_gpus"]
-
-    # Determines if a distributed backend should be used.
-    if arguments["distributed_backend"].lower() == "none" or num_gpus == 0:
-        distributed_backend = None
-    else:
-        distributed_backend = arguments["distributed_backend"].lower()
-
-    # Gets the level of precision that should be used.
-    if arguments["num_gpus"] == 0:
-        precision = 32
-    else:
-        precision = 16 if arguments["precision"] == 16 else 32
-
-    # Determines if a batch size finder should be used to determine the maximum batch size.
-    batch_size = "binsearch" if arguments["batch_size"] == -1 else None
-
-    # Determines if a learning rate finder should be used to determine the optimal starting learning rate.
-    lr = "starting_lr" if arguments["starting_lr"] == -1 else False
-
-    # Sets up the TensorBoard Logger used to track training metrics.
-    tb_logger = pl.loggers.TensorBoardLogger(save_dir=arguments["tensorboard_dir"], name=arguments["experiment"])
-
-    # Sets up the EarlyStopping callback.
-    early_stopping = pl.callbacks.EarlyStopping("val_loss", arguments["min_delta"], arguments["patience"], verbose=True)
-
-    # Sets up the checkpoint callback.
-    os.makedirs(arguments["experiment"], exist_ok=True)
-    checkpoint_callback = pl.callbacks.model_checkpoint.ModelCheckpoint(filepath=arguments["experiment"],
-                                                                        monitor="val_loss", save_top_k=1)
-
-    # Creates the PyTorch Lightning Trainer with values from arguments.
-    return pl.Trainer(distributed_backend=distributed_backend, gpus=num_gpus, precision=precision,
-                      max_epochs=arguments["max_epochs"], min_epochs=arguments["min_epochs"], logger=tb_logger,
-                      early_stop_callback=early_stopping, fast_dev_run=arguments["fast_dev_run"],
-                      num_sanity_val_steps=0, deterministic=True, auto_scale_batch_size=batch_size,
-                      auto_lr_find=lr, checkpoint_callback=checkpoint_callback)
+        return torch.device("cpu")

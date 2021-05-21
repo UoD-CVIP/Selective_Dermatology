@@ -1,58 +1,81 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-"""
-This file is the main executable for Selective Dermatology.
-This file loads the arguments, sets random seed, initialises and trains a model.
+
 """
 
+"""
 
-# Built-in/Generic Imports
-import os
 
 # Own Modules Imports
 from utils import *
 from config import *
-from selective_net import *
+from train_sn import *
+from train_cnn import *
 
 
-__author__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
+__author__    = ["Jacob Carse"]
 __copyright__ = "Copyright 2020, Selective Dermatology"
-__credits__ = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
-__license__ = "MIT"
-__version__ = "0.0.1"
-__maintainer__ = "Jacob Carse"
-__email__ = "j.carse@dundee.ac.uk"
-__status__ = "Development"
+__credits__   = ["Jacob Carse", "Stephen Hogg", "Stephen McKenna"]
+__license__   = "MIT"
+__version__   = "3.0.0"
+__maintainer  = "Jacob Carse"
+__email__     = "j.carse@dundee.ac.uk"
+__status__    = "Development"
 
 
 if __name__ == "__main__":
-    # Loads the arguments from a config file and the command line.
-    description = "Selective Dermatology"
-    arguments = load_arguments(description)
+    # Loads the arguments from configurations file and command line.
+    description = "Selective Dermatology Experiments"
+    arguments = load_configurations(description)
 
-    # Displays the given arguments.
-    print("Loaded Arguments:")
+    # Displays the loaded arguments.
+    log(arguments, "Loaded Arguments:")
     print_arguments(arguments)
 
     # Sets the random seed if specified.
-    if arguments["seed"] != -1:
-        set_random_seed(arguments["seed"])
-        print(f"\nSet Random Seed to {arguments['seed']}")
+    if arguments.seed != -1:
+        set_random_seed(arguments.seed)
+        log(arguments, f"Set Random Seed to {arguments.seed}\n")
 
-    # Loads the SelectiveNet Module.
-    module = SelectiveNetModule(arguments)
+    # Sets the default device to be used.
+    device = get_device(arguments)
+    log(arguments, f"Device set to {device}\n")
 
-    # Gets the PyTorch Lightning Trainer used to train and test the model.
-    trainer = get_trainer(arguments)
+    # Runs the selected task.
+    if arguments.task == "cnn":
 
-    # Trains the model using the trainer.
-    trainer.fit(module)
+        # Trains and tests the CNN model.
+        arguments.temperature = train_cnn(arguments, device)
+        test_cnn(arguments, device)
 
-    # Loads the trained model weights
-    filenames = os.listdir(arguments["experiment"])
-    filenames.sort(reverse=True)
-    module = module.load_from_checkpoint(os.path.join(arguments["experiment"], filenames[0]))
+    elif arguments.task == "train_cnn":
 
-    # Tests the trained model with the trainer.
-    trainer.test(module)
+        # Trains the CNN model.
+        train_cnn(arguments, device)
+
+    elif arguments.task == "test_cnn":
+
+        # Tests the CNN model.
+        test_cnn(arguments, device)
+
+    elif arguments.task == "sn":
+
+        # Trains and tests the SelectiveNet model.
+        arguments.temperature = train_sn(arguments, device)
+        test_sn(arguments, device)
+
+    elif arguments.task == "train_sn":
+
+        # Trains the SelectiveNet model.
+        train_sn(arguments, device)
+
+    elif arguments.task == "test_sn":
+
+        # Tests the SelectiveNet model.
+        test_sn(arguments, device)
+
+    else:
+
+        # Asks the user to enter a valid task.
+        log(arguments, "Enter a valid task \'cnn\' or \'sn\'.")
