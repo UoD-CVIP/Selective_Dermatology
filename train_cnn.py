@@ -344,7 +344,7 @@ def test_cnn(arguments, device):
     classifier = Classifier(arguments.efficient_net, pretrained=False)
 
     # Loads the trained model.
-    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_cnn_best.pt"), map_location=torch.device("cuda")))
+    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_cnn_best.pt")))
 
     # Sets the classifier to evaluation mode.
     classifier.eval()

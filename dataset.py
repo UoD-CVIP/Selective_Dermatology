@@ -148,9 +148,11 @@ def get_datasets(arguments):
     indices = [i for i, x in enumerate(labels) if x == 2]
 
     # Gets the filenames from the training array and then deletes them from the original array.
+    test_filenames = np.take(filenames, indices)
     filenames = np.delete(filenames, indices)
 
     # Gets the labels from the training array and deletes them from the original array.
+    test_labels = np.take(labels, indices)
     labels = np.delete(labels, indices)
 
     # Splits the dataset into training and temp(testing and validation).
@@ -163,16 +165,14 @@ def get_datasets(arguments):
                                                                               test_size=0.2 + arguments.val_split,
                                                                               random_state=arguments.seed)
 
-    # Adds additional testing images with unknown image label.
-    for file in os.listdir(os.path.join(arguments.dataset_dir, "Test_Images")):
-        if file.endswith(".jpg"):
-            temp_filenames = np.append(temp_filenames, f"{arguments.dataset_dir}/Test_Images/{file}")
-            temp_labels = np.append(temp_labels, 2)
+    # Adds the additional testing images and labels to the testing dataset.
+    test_filenames = np.append(test_filenames, temp_filenames)
+    test_labels = np.append(test_labels, temp_labels)
 
     # Creates the training, validation and testing dataset objects.
     train_data = Dataset(arguments, "train", filenames, labels)
     val_data = Dataset(arguments, "validation", val_filenames, val_labels)
-    test_data = Dataset(arguments, "test", temp_filenames, temp_labels)
+    test_data = Dataset(arguments, "test", test_filenames, test_labels)
 
     # Returns the dataset objects.
     return train_data, val_data, test_data

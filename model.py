@@ -52,7 +52,6 @@ class Classifier(nn.Module):
             self.encoder = EfficientNet.from_pretrained(f"efficientnet-b{str(b)}")
         else:
             self.encoder = EfficientNet.from_name(f"efficientnet-b{str(b)}")
-
         self.encoder_pool = nn.AdaptiveAvgPool2d(1)
 
         # Defines a hidden layer.
